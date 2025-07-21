@@ -12,7 +12,8 @@ const authRoutes = require('./src/routes/auth');
 const itemRoutes = require('./src/routes/items');
 const chatRoutes = require('./src/routes/chat');
 const userRoutes = require('./src/routes/users');
-const claimRoutes = require('./src/routes/claims');
+const claimRoutes = require('./src/routes/Claims');
+const adminRoutes = require('./src/routes/admin');
 const { initializeSocket } = require('./src/utils/socket');
 
 const app = express();
@@ -81,6 +82,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/claims', claimRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

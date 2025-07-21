@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { User, Mail, Phone, MapPin, Edit2, Save, X } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Edit2, Save, X, Lock, Key } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../utils/api'
 import toast from 'react-hot-toast'
@@ -9,6 +9,8 @@ const Profile = () => {
   const { user, updateUser } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
@@ -17,6 +19,8 @@ const Profile = () => {
       location: user?.location || ''
     }
   })
+
+  const { register: registerPassword, handleSubmit: handlePasswordSubmit, reset: resetPassword, formState: { errors: passwordErrors } } = useForm()
 
   const onSubmit = async (data) => {
     try {
@@ -34,6 +38,42 @@ const Profile = () => {
     }
   }
 
+  const onPasswordSubmit = async (data) => {
+    if (data.newPassword !== data.confirmPassword) {
+      toast.error('New passwords do not match')
+      return
+    }
+
+    try {
+      setChangingPassword(true)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          currentPassword: data.currentPassword,
+          newPassword: data.newPassword
+        }),
+      })
+
+      const result = await response.json()
+
+      if (response.ok) {
+        toast.success('Password changed successfully!')
+        setShowChangePassword(false)
+        resetPassword()
+      } else {
+        toast.error(result.message || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Error changing password:', error)
+      toast.error('Failed to change password')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
   const handleCancel = () => {
     reset({
       name: user?.name || '',
@@ -43,6 +83,10 @@ const Profile = () => {
     setIsEditing(false)
   }
 
+  const handleCancelPassword = () => {
+    setShowChangePassword(false)
+    resetPassword()
+  }
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -86,6 +130,7 @@ const Profile = () => {
 
           {/* Profile Information */}
           <div className="lg:col-span-2">
+            {!showChangePassword ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-gray-900">Profile Information</h3>
@@ -226,19 +271,99 @@ const Profile = () => {
                 </div>
               </form>
             </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">Change Password</h3>
+                  <button
+                    onClick={handleCancelPassword}
+                    className="btn-secondary"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </button>
+                </div>
+
+                <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-6">
+                  <div>
+                    <label className="form-label">
+                      <Lock className="w-4 h-4 inline mr-2" />
+                      Current Password
+                    </label>
+                    <input
+                      type="password"
+                      {...registerPassword('currentPassword', {
+                        required: 'Current password is required'
+                      })}
+                      className="form-input"
+                      placeholder="Enter your current password"
+                    />
+                    {passwordErrors.currentPassword && (
+                      <p className="mt-1 text-sm text-red-600">{passwordErrors.currentPassword.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="form-label">
+                      <Key className="w-4 h-4 inline mr-2" />
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      {...registerPassword('newPassword', {
+                        required: 'New password is required',
+                        minLength: {
+                          value: 6,
+                          message: 'Password must be at least 6 characters'
+                        }
+                      })}
+                      className="form-input"
+                      placeholder="Enter your new password"
+                    />
+                    {passwordErrors.newPassword && (
+                      <p className="mt-1 text-sm text-red-600">{passwordErrors.newPassword.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="form-label">
+                      <Key className="w-4 h-4 inline mr-2" />
+                      Confirm New Password
+                    </label>
+                    <input
+                      type="password"
+                      {...registerPassword('confirmPassword', {
+                        required: 'Please confirm your new password'
+                      })}
+                      className="form-input"
+                      placeholder="Confirm your new password"
+                    />
+                    {passwordErrors.confirmPassword && (
+                      <p className="mt-1 text-sm text-red-600">{passwordErrors.confirmPassword.message}</p>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={changingPassword}
+                    className="btn-primary w-full"
+                  >
+                    {changingPassword ? 'Changing Password...' : 'Change Password'}
+                  </button>
+                </form>
+              </div>
+            )}
 
             {/* Account Actions */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Account Actions</h3>
               <div className="space-y-4">
-                <button className="btn-outline w-full justify-start">
+                <button 
+                  onClick={() => setShowChangePassword(!showChangePassword)}
+                  className="btn-outline w-full justify-start"
+                >
+                  <Lock className="w-4 h-4 mr-2" />
                   Change Password
-                </button>
-                <button className="btn-outline w-full justify-start">
-                  Download My Data
-                </button>
-                <button className="text-red-600 hover:text-red-700 font-medium w-full text-left p-3 rounded-lg hover:bg-red-50 transition-colors">
-                  Delete Account
                 </button>
               </div>
             </div>

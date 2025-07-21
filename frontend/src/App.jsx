@@ -18,6 +18,7 @@ import ClaimItem from './pages/ClaimItem'
 import MyClaims from './pages/MyClaims'
 import ClaimReviews from './pages/ClaimReviews'
 import HandoverSuccess from './pages/HandoverSuccess'
+import AdminDashboard from './pages/AdminDashboard'
 
 function App() {
   const { user, loading } = useAuth()
@@ -60,6 +61,9 @@ function App() {
           <Route path="my-claims" element={<MyClaims />} />
           <Route path="claim-reviews" element={<ClaimReviews />} />
           <Route path="handover-success/:claimId" element={<HandoverSuccess />} />
+          {user?.role === 'admin' && (
+            <Route path="admin" element={<AdminDashboard />} />
+          )}
         </Route>
       )}
 

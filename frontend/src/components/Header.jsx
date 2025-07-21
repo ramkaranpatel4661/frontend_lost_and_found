@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Search, Menu, X, User, LogOut, Plus, MessageCircle, Package, Shield, Eye } from 'lucide-react'
+import { Search, Menu, X, User, LogOut, Plus, MessageCircle, Package, Shield, Eye, Settings } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import chatApi from '../api/chatApi'
 import { useSocket } from '../context/SocketContext'
@@ -131,6 +131,16 @@ const Header = () => {
                 >
                   Claim Reviews
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className={`text-sm font-medium transition-colors ${
+                      isActive('/admin') ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600'
+                    }`}
+                  >
+                    Admin
+                  </Link>
+                )}
                 <Link
                   to="/chats"
                   className={`text-sm font-medium transition-colors relative ${
@@ -207,6 +217,16 @@ const Header = () => {
                         <Eye className="w-4 h-4 mr-3" />
                         Claim Reviews
                       </Link>
+                      {user?.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <Settings className="w-4 h-4 mr-3" />
+                          Admin Panel
+                        </Link>
+                      )}
                       <Link
                         to="/chats"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 relative"
@@ -323,6 +343,17 @@ const Header = () => {
                   >
                     Claim Reviews
                   </Link>
+                  {user?.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors ${
+                        isActive('/admin') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
                   <Link
                     to="/chats"
                     className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors relative ${

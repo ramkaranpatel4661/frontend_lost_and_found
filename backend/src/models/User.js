@@ -52,6 +52,23 @@ const userSchema = new mongoose.Schema({
       min: 0,
       max: 100
     }
+  },
+  emailVerification: {
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    otp: {
+      type: String
+    },
+    otpExpires: {
+      type: Date
+    }
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
 }, {
   timestamps: true

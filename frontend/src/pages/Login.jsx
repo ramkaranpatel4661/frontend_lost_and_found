@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Search, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import toast from 'react-hot-toast'
 
 const Login = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [needsVerification, setNeedsVerification] = useState(false)
 
   const { register, handleSubmit, formState: { errors } } = useForm()
 
@@ -18,12 +20,51 @@ const Login = () => {
       await login(data)
       navigate('/')
     } catch (error) {
-      // Error is handled by the auth context
+      if (error.response?.data?.requiresVerification) {
+        setNeedsVerification(true)
+        toast.error('Please verify your email before logging in')
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
+  if (needsVerification) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <Link to="/" className="inline-flex items-center space-x-2 mb-6">
+              <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
+                <Search className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-gray-900">Lost & Found</span>
+            </Link>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Email Verification Required
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Please verify your email address before logging in.
+            </p>
+            <div className="space-y-4">
+              <Link
+                to="/register"
+                className="btn-primary w-full"
+              >
+                Complete Verification
+              </Link>
+              <button
+                onClick={() => setNeedsVerification(false)}
+                className="btn-outline w-full"
+              >
+                Back to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
