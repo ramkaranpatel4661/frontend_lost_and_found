@@ -71,12 +71,12 @@ const ClaimDetailsModal = ({ selectedClaim, onClose, onApprove, onReject }) => {
                     {selectedClaim.item.imageUrls.map((image, index) => (
                       <div key={index} className="relative">
                         <img
-                          src={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${image}`}
+                          src={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${image}`}
                           alt={`Item ${index + 1}`}
                           className="w-full h-24 object-cover rounded-lg"
                         />
                         <a
-                          href={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${image}`}
+                          href={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${image}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="absolute top-1 right-1 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-75"
@@ -148,7 +148,7 @@ const ClaimDetailsModal = ({ selectedClaim, onClose, onApprove, onReject }) => {
                       <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
                         <span className="text-sm text-gray-700">{doc.originalName || `Document ${index + 1}`}</span>
                         <a
-                          href={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}/uploads/${doc.filename}`}
+                          href={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}/uploads/${doc.filename}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:text-blue-800 flex items-center"

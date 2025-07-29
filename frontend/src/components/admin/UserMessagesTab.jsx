@@ -13,7 +13,7 @@ const UserMessagesTab = () => {
       try {
         const token = localStorage.getItem('token');
         const res = await axios.get(
-          (import.meta.env.VITE_API_URL || 'http://localhost:5000/api') + '/admin/contact-messages',
+          (import.meta.env.VITE_API_URL || 'https://backend-lost-found.onrender.com/api') + '/admin/contact-messages',
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMessages(res.data.messages || []);

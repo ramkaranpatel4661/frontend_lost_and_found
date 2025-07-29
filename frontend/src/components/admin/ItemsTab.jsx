@@ -51,7 +51,7 @@ const ItemsTab = ({
             <div className="aspect-w-16 aspect-h-12 bg-gray-200 rounded-lg overflow-hidden mb-4">
               {item.imageUrls && item.imageUrls.length > 0 ? (
                 <img
-                  src={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${item.imageUrls[0]}`}
+                  src={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${item.imageUrls[0]}`}
                   alt={item.title}
                   className="w-full h-32 object-cover"
                 />

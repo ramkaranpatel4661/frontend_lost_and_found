@@ -20,7 +20,7 @@ const ImageDisplay = ({
     }
     
     // Use environment variable for base URL
-    const baseUrl = import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    const baseUrl = import.meta.env.VITE_BASE_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://backend-lost-found.onrender.com';
     
     // Ensure path always includes /uploads if it doesn't already
     let cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;

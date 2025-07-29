@@ -137,7 +137,7 @@ const MyClaims = () => {
                     <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                       {claim.item.imageUrls && claim.item.imageUrls.length > 0 ? (
                         <img
-                          src={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${claim.item.imageUrls[0]}`}
+                          src={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${claim.item.imageUrls[0]}`}
                           alt={claim.item.title}
                           className="w-full h-full object-cover"
                         />
@@ -243,7 +243,7 @@ const MyClaims = () => {
                         <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
                           {claim.item.imageUrls && claim.item.imageUrls.length > 0 ? (
                             <img
-                              src={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${claim.item.imageUrls[0]}`}
+                              src={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${claim.item.imageUrls[0]}`}
                               alt={claim.item.title}
                               className="w-full h-full object-cover"
                             />

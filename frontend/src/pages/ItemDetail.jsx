@@ -271,7 +271,7 @@ const ItemDetail = () => {
                   <div className="aspect-w-16 aspect-h-12 bg-gray-200 rounded-t-xl overflow-hidden">
                     {similarItem.imageUrls && similarItem.imageUrls.length > 0 ? (
                       <img
-                        src={`${import.meta.env.VITE_BASE_URL || 'http://localhost:5000'}${similarItem.imageUrls[0]}`}
+                        src={`${import.meta.env.VITE_BASE_URL || 'https://backend-lost-found.onrender.com'}${similarItem.imageUrls[0]}`}
                         alt={similarItem.title}
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                       />
