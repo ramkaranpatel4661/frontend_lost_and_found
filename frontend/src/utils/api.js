@@ -46,60 +46,86 @@ export const authApi = {
 
 // Items API
 export const itemsApi = {
-  getItems: (filters) => {
-    const params = new URLSearchParams()
-    if (filters?.type) params.append('type', filters.type)
-    if (filters?.category) params.append('category', filters.category)
-    if (filters?.city) params.append('city', filters.city)
-    if (filters?.search) params.append('search', filters.search)
-    if (filters?.page) params.append('page', filters.page.toString())
-    if (filters?.limit) params.append('limit', filters.limit.toString())
-
-    return api.get(`/items?${params.toString()}`)
+  // Get all items with filtering and pagination
+  getItems: async (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/items?${queryString}`);
   },
 
-  getItem: (id) => api.get(`/items/${id}`),
+  // Get items statistics
+  getStats: async () => {
+    return api.get('/items/stats');
+  },
 
-  createItem: (data) => {
-    const formData = new FormData()
+  // Get single item by ID
+  getItem: async (id) => api.get(`/items/${id}`),
 
-    formData.append('title', data.title)
-    formData.append('description', data.description)
-    formData.append('category', data.category)
-    formData.append('type', data.type)
-    formData.append('location', JSON.stringify(data.location))
-
-    if (data.dateFound) {
-      formData.append('dateFound', data.dateFound)
+  // Create new item
+  createItem: async (itemData) => {
+    const formData = new FormData();
+    
+    // Add text fields
+    Object.keys(itemData).forEach(key => {
+      if (key !== 'imageUrls') {
+        formData.append(key, itemData[key]);
+      }
+    });
+    
+    // Add images
+    if (itemData.imageUrls) {
+      itemData.imageUrls.forEach(file => {
+        formData.append('imageUrls', file);
+      });
     }
-    if (data.dateLost) {
-      formData.append('dateLost', data.dateLost)
-    }
-    if (data.contactInfo) {
-      formData.append('contactInfo', JSON.stringify(data.contactInfo))
-    }
-    if (data.priority) {
-      formData.append('priority', data.priority)
-    }
-
-    data.images.forEach((image) => {
-      formData.append('images', image)
-    })
-
+    
     return api.post('/items', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    })
+    });
   },
 
-  updateItem: (id, data) =>
-    api.put(`/items/${id}`, data),
+  // Update item
+  updateItem: async (id, itemData) => {
+    const formData = new FormData();
+    
+    // Add text fields
+    Object.keys(itemData).forEach(key => {
+      if (key !== 'imageUrls' && key !== 'removedImages') {
+        formData.append(key, itemData[key]);
+      }
+    });
+    
+    // Add new images
+    if (itemData.imageUrls) {
+      itemData.imageUrls.forEach(file => {
+        if (file instanceof File) {
+          formData.append('imageUrls', file);
+        }
+      });
+    }
+    
+    // Add removed images info
+    if (itemData.removedImages) {
+      formData.append('removedImages', JSON.stringify(itemData.removedImages));
+    }
+    
+    return api.put(`/items/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 
-  deleteItem: (id) => api.delete(`/items/${id}`),
+  // Delete item
+  deleteItem: async (id) => api.delete(`/items/${id}`),
 
-  getMyItems: () => api.get('/items/user/my-items'),
-}
+  // Get user's items
+  getMyItems: async () => api.get('/items/user/my-items'),
+
+  // Get items by user ID
+  getItemsByUser: async (userId) => api.get(`/items/user/${userId}`)
+};
 
 // Chat API - Updated for private messaging
 export const chatApi = {
@@ -149,5 +175,63 @@ export const usersApi = {
     return api.get(`/users/search?${params.toString()}`)
   }
 }
+
+// Admin API
+export const adminApi = {
+  // Dashboard
+  getDashboardStats: () => api.get('/admin/dashboard'),
+  
+  // Users Management
+  getUsers: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/admin/users?${queryString}`);
+  },
+  deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
+  promoteToAdmin: (userId) => api.put(`/admin/users/${userId}/promote`),
+  banUser: (userId, reason) => api.put(`/admin/users/${userId}/ban`, { reason }),
+  unbanUser: (userId) => api.put(`/admin/users/${userId}/unban`),
+  getUserStats: (userId) => api.get(`/admin/users/${userId}/stats`),
+  
+  // Items Management
+  getItems: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/admin/items?${queryString}`);
+  },
+  deleteItem: (itemId) => api.delete(`/admin/items/${itemId}`),
+  bulkDeleteItems: (itemIds) => api.post('/admin/items/bulk-delete', { itemIds }),
+  getItemStats: (itemId) => api.get(`/admin/items/${itemId}/stats`),
+  
+  // Claims Management
+  getClaims: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/admin/claims?${queryString}`);
+  },
+  getClaimDetails: (claimId) => api.get(`/admin/claims/${claimId}`),
+  approveClaim: (claimId, notes) => api.put(`/admin/claims/${claimId}/approve`, { notes }),
+  rejectClaim: (claimId, reason) => api.put(`/admin/claims/${claimId}/reject`, { reason }),
+  bulkApproveClaims: (claimIds) => api.post('/admin/claims/bulk-approve', { claimIds }),
+  bulkRejectClaims: (claimIds, reason) => api.post('/admin/claims/bulk-reject', { claimIds, reason }),
+  
+  // Analytics & Reports
+  getAnalytics: (period = '30d') => api.get(`/admin/analytics?period=${period}`),
+  getReports: (type, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/admin/reports/${type}?${queryString}`);
+  },
+  exportData: (type, format = 'csv') => api.get(`/admin/export/${type}?format=${format}`),
+  
+  // System Management
+  getSystemStats: () => api.get('/admin/system/stats'),
+  getAdminLogs: (params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return api.get(`/admin/logs?${queryString}`);
+  },
+  clearCache: () => api.post('/admin/system/clear-cache'),
+  
+  // Notifications
+  sendNotification: (data) => api.post('/admin/notifications/send', data),
+  getNotifications: () => api.get('/admin/notifications'),
+  markNotificationRead: (notificationId) => api.put(`/admin/notifications/${notificationId}/read`),
+};
 
 export default api

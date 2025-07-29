@@ -12,9 +12,15 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (!token) return;
-    const newSocket = io('http://localhost:5000', {
-      auth: { token }
+    
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
+    
+    const newSocket = io(socketUrl, {
+      auth: { token },
+      transports: ['websocket'],
+      withCredentials: true
     });
+    
     newSocket.on('connect', () => console.log('Socket connected:', newSocket.id));
     newSocket.on('disconnect', () => console.log('Socket disconnected'));
     setSocket(newSocket);

@@ -8,7 +8,8 @@ import {
   Package,
   Eye,
   Calendar,
-  User
+  User,
+  MapPin
 } from 'lucide-react';
 import claimsApi from '../api/claimsApi';
 import { useAuth } from '../context/AuthContext';

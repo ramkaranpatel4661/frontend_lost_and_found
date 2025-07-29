@@ -4,13 +4,14 @@ import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Search, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
+import Modal from 'react-modal';
 
 const Login = () => {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [needsVerification, setNeedsVerification] = useState(false)
+  // Remove all OTP and forgot password state and handlers
 
   const { register, handleSubmit, formState: { errors } } = useForm()
 
@@ -21,7 +22,6 @@ const Login = () => {
       navigate('/')
     } catch (error) {
       if (error.response?.data?.requiresVerification) {
-        setNeedsVerification(true)
         toast.error('Please verify your email before logging in')
       }
     } finally {
@@ -29,7 +29,9 @@ const Login = () => {
     }
   }
 
-  if (needsVerification) {
+  // Only keep standard login form and logic
+
+  if (false) { // Removed needsVerification check
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
@@ -54,7 +56,7 @@ const Login = () => {
                 Complete Verification
               </Link>
               <button
-                onClick={() => setNeedsVerification(false)}
+                onClick={() => false} // Removed setNeedsVerification(false)
                 className="btn-outline w-full"
               >
                 Back to Login
@@ -154,9 +156,7 @@ const Login = () => {
                 />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                Forgot password?
-              </a>
+              {/* Removed Forgot Password link */}
             </div>
 
             <button
@@ -193,6 +193,7 @@ const Login = () => {
           </div>
         </div>
       </div>
+      {/* Removed OTP and Forgot Password Modals */}
     </div>
   )
 }

@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Search, Menu, X, User, LogOut, Plus, MessageCircle, Package, Shield, Eye, Settings } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import chatApi from '../api/chatApi'
 import { useSocket } from '../context/SocketContext'
-
 
 const Header = () => {
   const { user, logout } = useAuth()
@@ -14,8 +13,26 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
 
-    useEffect(() => {
+  // Click outside handler for user menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isUserMenuOpen])
+
+  useEffect(() => {
     if (!user) return
     const fetchUnread = async () => {
       try {
@@ -38,8 +55,7 @@ const Header = () => {
     fetchUnread()
   }, [user, location])
 
-
- // Listen for new_message only on your personal room
+  // Listen for new_message only on your personal room
   useEffect(() => {
     if (!socket || !user) return
 
@@ -97,7 +113,7 @@ const Header = () => {
             >
               Browse Items
             </Link>
-            {user && (
+            {user && user.role === 'user' && (
               <>
                 <Link
                   to="/post"
@@ -131,16 +147,6 @@ const Header = () => {
                 >
                   Claim Reviews
                 </Link>
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className={`text-sm font-medium transition-colors ${
-                      isActive('/admin') ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600'
-                    }`}
-                  >
-                    Admin
-                  </Link>
-                )}
                 <Link
                   to="/chats"
                   className={`text-sm font-medium transition-colors relative ${
@@ -156,11 +162,21 @@ const Header = () => {
                 </Link>
               </>
             )}
+            {user && user.role === 'admin' && (
+              <Link
+                to="/admin"
+                className={`text-sm font-medium transition-colors ${
+                  isActive('/admin') ? 'text-primary-600' : 'text-gray-700 hover:text-primary-600'
+                }`}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* User Menu / Auth Buttons */}
           <div className="flex items-center space-x-4">
-            {user ? (
+            {user && user.role === 'user' ? (
               <>
                 <Link
                   to="/post"
@@ -169,8 +185,7 @@ const Header = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Post Item
                 </Link>
-                
-                <div className="relative">
+                <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -182,7 +197,6 @@ const Header = () => {
                       {user.name}
                     </span>
                   </button>
-
                   {isUserMenuOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                       <Link
@@ -217,16 +231,6 @@ const Header = () => {
                         <Eye className="w-4 h-4 mr-3" />
                         Claim Reviews
                       </Link>
-                      {user?.role === 'admin' && (
-                        <Link
-                          to="/admin"
-                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <Settings className="w-4 h-4 mr-3" />
-                          Admin Panel
-                        </Link>
-                      )}
                       <Link
                         to="/chats"
                         className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 relative"
@@ -252,6 +256,48 @@ const Header = () => {
                   )}
                 </div>
               </>
+            ) : user && user.role === 'admin' ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-primary-600" />
+                  </div>
+                  <span className="hidden md:block text-sm font-medium text-gray-700">
+                    {user.name}
+                  </span>
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    <Link
+                      to="/profile"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <User className="w-4 h-4 mr-3" />
+                      Profile
+                    </Link>
+                    <Link
+                      to="/admin"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Settings className="w-4 h-4 mr-3" />
+                      Admin Panel
+                    </Link>
+                    <hr className="my-1" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4 mr-3" />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link
@@ -354,20 +400,6 @@ const Header = () => {
                       Admin Panel
                     </Link>
                   )}
-                  <Link
-                    to="/chats"
-                    className={`text-sm font-medium px-3 py-2 rounded-lg transition-colors relative ${
-                      isActive('/chats') ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Messages
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-3 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </Link>
                   <hr className="my-2" />
                   <button
                     onClick={handleLogout}

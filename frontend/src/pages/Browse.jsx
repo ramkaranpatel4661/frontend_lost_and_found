@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter, MapPin, Clock, Package, ChevronDown, CheckCircle, Award } from 'lucide-react'
 import { itemsApi } from '../utils/api'
@@ -9,6 +9,7 @@ const Browse = () => {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [successfulReturns, setSuccessfulReturns] = useState(0)
+  const [totalItems, setTotalItems] = useState(0)
   const [filters, setFilters] = useState({
     page: 1,
     limit: 12
@@ -19,6 +20,7 @@ const Browse = () => {
     totalItems: 0
   })
   const [showFilters, setShowFilters] = useState(false)
+  const [searchTimeout, setSearchTimeout] = useState(null)
 
   const categories = [
     'Electronics', 'Clothing', 'Accessories', 'Documents', 'Keys', 
@@ -27,17 +29,33 @@ const Browse = () => {
 
   useEffect(() => {
     fetchItems()
-    fetchSuccessfulReturns()
+    fetchStats()
   }, [filters])
 
-  const fetchSuccessfulReturns = async () => {
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
+    }
+  }, [searchTimeout])
+
+  const fetchStats = async () => {
     try {
-      const response = await claimsApi.getSuccessfulReturnsCount()
-      setSuccessfulReturns(response.data.count)
+      // Fetch both successful returns count and items stats
+      const [returnsResponse, itemsStatsResponse] = await Promise.all([
+        claimsApi.getSuccessfulReturnsCount(),
+        itemsApi.getStats()
+      ]);
+      
+      setSuccessfulReturns(returnsResponse.data.count);
+      setTotalItems(itemsStatsResponse.data.totalItems);
     } catch (error) {
-      console.error('Error fetching successful returns:', error)
+      console.error('Error fetching stats:', error);
     }
   }
+
   const fetchItems = async () => {
     try {
       setLoading(true)
@@ -52,11 +70,29 @@ const Browse = () => {
   }
 
   const handleFilterChange = (key, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value,
-      page: 1 // Reset to first page when filters change
-    }))
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+
+    // For search, add debouncing
+    if (key === 'search') {
+      const timeout = setTimeout(() => {
+        setFilters(prev => ({
+          ...prev,
+          [key]: value,
+          page: 1 // Reset to first page when filters change
+        }))
+      }, 500) // 500ms delay
+      setSearchTimeout(timeout)
+    } else {
+      // For other filters, update immediately
+      setFilters(prev => ({
+        ...prev,
+        [key]: value,
+        page: 1 // Reset to first page when filters change
+      }))
+    }
   }
 
   const handlePageChange = (page) => {
@@ -65,6 +101,10 @@ const Browse = () => {
   }
 
   const clearFilters = () => {
+    // Clear search timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
     setFilters({ page: 1, limit: 12 })
   }
 
@@ -88,6 +128,7 @@ const Browse = () => {
                 <span className="text-2xl font-bold text-green-700">{successfulReturns}</span>
               </div>
               <p className="text-sm text-green-600 font-medium">Items Successfully Returned</p>
+              <p className="text-xs text-green-500 mt-1">Out of {totalItems} total items</p>
             </div>
           </div>
         </div>
