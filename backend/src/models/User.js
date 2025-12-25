@@ -69,6 +69,38 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['user', 'admin'],
     default: 'user'
+  },
+  // Admin management fields
+  banReason: {
+    type: String,
+    trim: true
+  },
+  bannedAt: {
+    type: Date
+  },
+  bannedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  adminNotes: {
+    type: String,
+    trim: true
+  },
+  // Activity tracking
+  loginCount: {
+    type: Number,
+    default: 0
+  },
+  lastLoginAt: {
+    type: Date
+  },
+  // Security
+  failedLoginAttempts: {
+    type: Number,
+    default: 0
+  },
+  accountLockedUntil: {
+    type: Date
   }
 }, {
   timestamps: true
@@ -92,6 +124,33 @@ userSchema.pre('save', async function(next) {
 // Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Check if user is banned
+userSchema.methods.isBanned = function() {
+  return !this.isActive && this.banReason;
+};
+
+// Update login stats
+userSchema.methods.updateLoginStats = function() {
+  this.loginCount += 1;
+  this.lastLoginAt = new Date();
+  this.lastSeen = new Date();
+  this.failedLoginAttempts = 0;
+  this.accountLockedUntil = undefined;
+};
+
+// Record failed login attempt
+userSchema.methods.recordFailedLogin = function() {
+  this.failedLoginAttempts += 1;
+  if (this.failedLoginAttempts >= 5) {
+    this.accountLockedUntil = new Date(Date.now() + 30 * 60 * 1000); // Lock for 30 minutes
+  }
+};
+
+// Check if account is locked
+userSchema.methods.isLocked = function() {
+  return this.accountLockedUntil && this.accountLockedUntil > new Date();
 };
 
 // Remove password from JSON output

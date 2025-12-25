@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { 
-  ArrowLeft, 
-  Upload, 
-  X, 
-  Shield, 
-  AlertTriangle, 
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Shield,
+  AlertTriangle,
   FileText,
   User,
   Phone,
@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 const ClaimItem = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +64,7 @@ const ClaimItem = () => {
 
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files || []);
-    
+
     if (proofFiles.length + files.length > 3) {
       toast.error('Maximum 3 proof documents allowed');
       return;
@@ -105,7 +106,7 @@ const ClaimItem = () => {
 
   const handleAdditionalProofUpload = (e) => {
     const files = Array.from(e.target.files || []);
-    
+
     if (additionalProofFiles.length + files.length > 2) {
       toast.error('Maximum 2 additional proof images allowed');
       return;
@@ -168,7 +169,7 @@ const ClaimItem = () => {
       };
 
       await claimsApi.submitClaim(claimData);
-      
+
       toast.success('Claim submitted successfully! The item owner will review your request.');
       navigate(`/item/${id}`);
     } catch (error) {
@@ -180,16 +181,15 @@ const ClaimItem = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Login Required</h2>
-          <p className="text-gray-600">Please log in to submit a claim for this item.</p>
-        </div>
-      </div>
-    );
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error('Please log in to claim this item');
+      navigate('/login', { state: { from: location.pathname }, replace: true });
+    }
+  }, [user, loading, navigate, location]);
+
+  if (!user && !loading) {
+    return null; // Return null while redirecting
   }
 
   if (loading) {
@@ -263,7 +263,7 @@ const ClaimItem = () => {
                 <User className="w-5 h-5 mr-2" />
                 Personal Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">Full Name *</label>
@@ -311,7 +311,7 @@ const ClaimItem = () => {
                 <CreditCard className="w-5 h-5 mr-2" />
                 ID Verification
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="form-label">ID Type *</label>
@@ -360,7 +360,7 @@ const ClaimItem = () => {
                 <MessageSquare className="w-5 h-5 mr-2" />
                 Ownership Verification
               </h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="form-label">
@@ -388,7 +388,7 @@ const ClaimItem = () => {
                     className="form-input"
                     placeholder="Any additional information that can help verify ownership (purchase details, serial numbers, etc.)"
                   />
-                  
+
                   <div className="mt-4">
                     <label className="form-label">Additional Proof Images (Optional)</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
@@ -452,7 +452,7 @@ const ClaimItem = () => {
                 <FileText className="w-5 h-5 mr-2" />
                 Proof Documents *
               </h3>
-              
+
               <div className="space-y-4">
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -513,7 +513,7 @@ const ClaimItem = () => {
                 <div>
                   <h4 className="font-semibold text-yellow-900 mb-1">Important Notice</h4>
                   <p className="text-sm text-yellow-800">
-                    By submitting this claim, you confirm that all information provided is accurate and truthful. 
+                    By submitting this claim, you confirm that all information provided is accurate and truthful.
                     False claims may result in account suspension and legal action.
                   </p>
                 </div>

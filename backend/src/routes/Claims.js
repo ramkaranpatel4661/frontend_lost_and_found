@@ -3,7 +3,7 @@ const Claim = require('../models/Claim');
 const Item = require('../models/Item');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/', auth, upload.fields([
   { name: 'proofDocuments', maxCount: 3 },
   { name: 'additionalProofImages', maxCount: 2 }
-]), async (req, res) => {
+]), handleUploadError, async (req, res) => {
   try {
     const {
       itemId,
@@ -191,7 +191,11 @@ router.get('/item/:itemId', auth, async (req, res) => {
 // @access  Public
 router.get('/successful-returns-count', async (req, res) => {
   try {
-    const count = await Claim.countDocuments({ status: 'resolved' });
+    // Count claims that are either approved or resolved
+    // This represents all successful returns (approved by owner and/or completed handover)
+    const count = await Claim.countDocuments({ 
+      status: { $in: ['approved', 'resolved'] } 
+    });
     res.json({ count });
   } catch (error) {
     console.error('Error fetching successful returns count:', error);

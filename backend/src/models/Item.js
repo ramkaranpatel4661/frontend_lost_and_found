@@ -54,6 +54,11 @@ const itemSchema = new mongoose.Schema({
     enum: ['active', 'resolved', 'expired'],
     default: 'active'
   },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high'],
+    default: 'medium'
+  },
   postedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -71,10 +76,14 @@ const itemSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for better search performance
-itemSchema.index({ title: 'text', description: 'text', location: 'text' });
-itemSchema.index({ type: 1, status: 1, createdAt: -1 });
+// Indexes for better search performance
+// Individual field indexes for regex search
+itemSchema.index({ title: 1 });
+itemSchema.index({ description: 1 });
 itemSchema.index({ category: 1 });
+itemSchema.index({ type: 1, status: 1, createdAt: -1 });
 itemSchema.index({ postedBy: 1 });
+itemSchema.index({ priority: 1 });
+itemSchema.index({ 'location.city': 1 });
 
 module.exports = mongoose.model('Item', itemSchema);

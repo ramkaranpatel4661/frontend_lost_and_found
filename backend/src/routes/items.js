@@ -2,9 +2,31 @@ const express = require('express');
 const Item = require('../models/Item');
 const Claim = require('../models/Claim');
 const auth = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { upload, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
+
+// @route   GET /api/items/stats
+// @desc    Get items statistics (public)
+// @access  Public
+router.get('/stats', async (req, res) => {
+  try {
+    const [totalItems, activeItems, resolvedItems] = await Promise.all([
+      Item.countDocuments(),
+      Item.countDocuments({ status: 'active' }),
+      Item.countDocuments({ status: 'resolved' })
+    ]);
+
+    res.json({
+      totalItems,
+      activeItems,
+      resolvedItems
+    });
+  } catch (error) {
+    console.error('Error fetching items stats:', error);
+    res.status(500).json({ message: 'Server error fetching stats' });
+  }
+});
 
 // @route   GET /api/items
 // @desc    Get all items with filtering and pagination
@@ -44,7 +66,16 @@ router.get('/', async (req, res) => {
     }
     
     if (search) {
-      query.$text = { $search: search };
+      // Clean and escape the search term for regex
+      const searchTerm = search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Use regex for partial matching instead of $text search
+      // Search across title, description, and category fields
+      query.$or = [
+        { title: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } },
+        { category: { $regex: searchTerm, $options: 'i' } }
+      ];
     }
 
     // Execute query with pagination
@@ -55,19 +86,31 @@ router.get('/', async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
 
-    // Get claim status for each item
-    const itemsWithClaimStatus = await Promise.all(items.map(async (item) => {
-      const claim = await Claim.findOne({ 
-        item: item._id, 
-        status: { $in: ['approved', 'resolved'] } 
-      }).sort('-createdAt');
-      
-      const itemObj = item.toObject();
-      if (claim) {
-        itemObj.claimStatus = claim.status;
+    // --- OPTIMIZATION: Fix N+1 query problem ---
+    // 1. Get all item IDs from the current page
+    const itemIds = items.map(item => item._id);
+
+    // 2. Fetch all relevant claims for these items in a single query
+    const claims = await Claim.find({
+      item: { $in: itemIds },
+      status: { $in: ['approved', 'resolved'] }
+    }).sort('-createdAt');
+
+    // 3. Create a lookup map for quick access
+    const claimStatusMap = claims.reduce((acc, claim) => {
+      // Only store the most recent claim for each item
+      if (!acc[claim.item]) {
+        acc[claim.item] = claim.status;
       }
+      return acc;
+    }, {});
+
+    // 4. Map claims to items efficiently
+    const itemsWithClaimStatus = items.map(item => {
+      const itemObj = item.toObject();
+      itemObj.claimStatus = claimStatusMap[item._id.toString()];
       return itemObj;
-    }));
+    });
     // Get total count for pagination
     const total = await Item.countDocuments(query);
 
@@ -82,6 +125,33 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Items fetch error:', error);
     res.status(500).json({ message: 'Server error fetching items' });
+  }
+});
+
+// @route   GET /api/items/user/my-items
+// @desc    Get current user's items
+// @access  Private
+router.get('/user/my-items', auth, async (req, res) => {
+  try {
+    const { type, status } = req.query;
+    const query = { postedBy: req.user._id };
+
+    if (type && ['found', 'lost'].includes(type)) {
+      query.type = type;
+    }
+    // Assuming you might add more statuses later
+    if (status && ['active', 'resolved', 'claimed'].includes(status)) {
+      query.status = status;
+    }
+
+    const items = await Item.find(query)
+      .sort('-createdAt')
+      .populate('postedBy', 'name email');
+
+    res.json(items);
+  } catch (error) {
+    console.error('User items fetch error:', error);
+    res.status(500).json({ message: 'Server error fetching user items' });
   }
 });
 
@@ -120,7 +190,7 @@ router.get('/:id', async (req, res) => {
 // @route   POST /api/items
 // @desc    Post a lost or found item (generic)
 // @access  Private
-router.post('/', auth, upload.array('images', 5), async (req, res) => {
+router.post('/', auth, upload.array('images', 5), handleUploadError, async (req, res) => {
   try {
     const {
       title,
@@ -147,7 +217,7 @@ router.post('/', auth, upload.array('images', 5), async (req, res) => {
       dateFound,
       dateLost,
       contactInfo: parsedContactInfo,
-      priority,
+      priority: priority || 'medium',
       postedBy: req.user._id,
     });
 
@@ -186,7 +256,7 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this item' });
     }
 
-    const allowedUpdates = ['title', 'description', 'location', 'status', 'contactInfo'];
+    const allowedUpdates = ['title', 'description', 'location', 'status', 'contactInfo', 'priority'];
     const updates = {};
 
     allowedUpdates.forEach(field => {
@@ -233,22 +303,6 @@ router.delete('/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Item delete error:', error);
     res.status(500).json({ message: 'Server error deleting item' });
-  }
-});
-
-// @route   GET /api/items/user/my-items
-// @desc    Get current user's items
-// @access  Private
-router.get('/user/my-items', auth, async (req, res) => {
-  try {
-    const items = await Item.find({ postedBy: req.user._id })
-      .sort('-createdAt')
-      .populate('postedBy', 'name email');
-
-    res.json(items);
-  } catch (error) {
-    console.error('User items fetch error:', error);
-    res.status(500).json({ message: 'Server error fetching user items' });
   }
 });
 

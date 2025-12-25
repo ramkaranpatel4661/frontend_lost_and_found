@@ -14,30 +14,72 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    // Generate unique filename
+    // Generate unique filename with timestamp and random number
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    cb(null, file.fieldname + '-' + uniqueSuffix + fileExtension);
   }
 });
 
-// File filter
+// Enhanced file filter with better validation
 const fileFilter = (req, file, cb) => {
   // Check file type
-  if (file.mimetype.startsWith('image/')) {
+  const allowedMimeTypes = [
+    'image/jpeg',
+    'image/jpg', 
+    'image/png',
+    'image/gif',
+    'image/webp'
+  ];
+  
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const fileExtension = path.extname(file.originalname).toLowerCase();
+  
+  if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(fileExtension)) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error(`Invalid file type. Only ${allowedExtensions.join(', ')} files are allowed.`), false);
   }
 };
 
-// Configure multer
+// Configure multer with enhanced settings
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 5 // Maximum 5 files
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, // 5MB limit
+    files: 5, // Maximum 5 files
+    fieldSize: 2 * 1024 * 1024 // 2MB for text fields
   },
   fileFilter: fileFilter
 });
 
-module.exports = upload;
+// Error handling middleware for multer
+const handleUploadError = (error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ 
+        message: 'File too large. Maximum size is 5MB per file.' 
+      });
+    }
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ 
+        message: 'Too many files. Maximum 5 files allowed.' 
+      });
+    }
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ 
+        message: 'Unexpected file field.' 
+      });
+    }
+  }
+  
+  if (error.message.includes('Invalid file type')) {
+    return res.status(400).json({ 
+      message: error.message 
+    });
+  }
+  
+  next(error);
+};
+
+module.exports = { upload, handleUploadError };

@@ -17,13 +17,15 @@ const MyItems = () => {
     if (user) {
       fetchMyItems()
     }
-  }, [user])
+  }, [user, filter, statusFilter]) // Re-fetch when filters change
 
   const fetchMyItems = async () => {
     try {
       setLoading(true)
-      const response = await itemsApi.getMyItems()
-      setItems(response.data) // response.data is the array of items
+      // Pass filters to the API. Use undefined for 'all' to not send the param.
+      const params = { type: filter === 'all' ? undefined : filter, status: statusFilter === 'all' ? undefined : statusFilter };
+      const response = await itemsApi.getMyItems(params)
+      setItems(response.data)
     } catch (error) {
       console.error('Error fetching my items:', error)
       toast.error('Failed to load your items')
@@ -47,12 +49,7 @@ const MyItems = () => {
     }
   }
 
-  const filteredItems = items.filter(item => {
-    const typeMatch = filter === 'all' || item.type === filter
-    const statusMatch = statusFilter === 'all' || item.status === statusFilter
-    return typeMatch && statusMatch
-  })
-
+  // Client-side filtering is no longer needed. The `items` state is now the filtered list.
   const stats = {
     total: items.length,
     found: items.filter(item => item.type === 'found').length,
@@ -153,14 +150,14 @@ const MyItems = () => {
           <div className="flex justify-center py-12">
             <LoadingSpinner size="lg" />
           </div>
-        ) : filteredItems.length === 0 ? (
+        ) : items.length === 0 ? (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {items.length === 0 ? 'No items posted yet' : 'No items match your filters'}
+              {filter === 'all' && statusFilter === 'all' ? 'No items posted yet' : 'No items match your filters'}
             </h3>
             <p className="text-gray-600 mb-6">
-              {items.length === 0 
+              {filter === 'all' && statusFilter === 'all'
                 ? 'Start by posting your first found or lost item'
                 : 'Try adjusting your filter criteria'
               }
@@ -177,7 +174,7 @@ const MyItems = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item) => (
+            {items.map((item) => (
               <div key={item._id} className="card group">
                 <div className="aspect-w-16 aspect-h-12 bg-gray-200 rounded-t-xl overflow-hidden">
                   {item.imageUrls && item.imageUrls.length > 0 ? (
@@ -231,15 +228,17 @@ const MyItems = () => {
                     >
                       View
                     </Link>
-                    <button
-                      onClick={() => {/* TODO: Implement edit */}}
-                      className="btn-secondary"
+                    <Link
+                      to={`/item/${item._id}/edit`}
+                      className="btn-secondary px-3 flex items-center justify-center"
+                      title="Edit Item"
                     >
                       <Edit className="w-4 h-4" />
-                    </button>
+                    </Link>
                     <button
                       onClick={() => handleDeleteItem(item._id)}
-                      className="btn-danger"
+                      className="btn-outline px-3 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-600 flex items-center justify-center"
+                      title="Delete Item"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

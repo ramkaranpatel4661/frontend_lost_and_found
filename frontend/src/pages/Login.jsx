@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Search, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -8,6 +8,7 @@ import Modal from 'react-modal';
 
 const Login = () => {
   const navigate = useNavigate()
+  const location = useLocation()
   const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -19,7 +20,8 @@ const Login = () => {
     try {
       setIsLoading(true)
       await login(data)
-      navigate('/')
+      const from = location.state?.from || '/'
+      navigate(from)
     } catch (error) {
       if (error.response?.data?.requiresVerification) {
         toast.error('Please verify your email before logging in')

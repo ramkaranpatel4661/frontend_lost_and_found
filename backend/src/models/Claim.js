@@ -116,6 +116,45 @@ const claimSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     }
+  },
+  // Admin management fields
+  adminNotes: {
+    type: String,
+    trim: true,
+    maxlength: 1000
+  },
+  approvedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  approvedAt: {
+    type: Date
+  },
+  rejectedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  rejectedAt: {
+    type: Date
+  },
+  rejectionReason: {
+    type: String,
+    trim: true,
+    maxlength: 500
+  },
+  // Priority and flags
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  isFlagged: {
+    type: Boolean,
+    default: false
+  },
+  flagReason: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true

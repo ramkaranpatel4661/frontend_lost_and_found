@@ -46,30 +46,18 @@ const Profile = () => {
 
     try {
       setChangingPassword(true)
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/change-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          currentPassword: data.currentPassword,
-          newPassword: data.newPassword
-        }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        toast.success('Password changed successfully!')
-        setShowChangePassword(false)
-        resetPassword()
-      } else {
-        toast.error(result.message || 'Failed to change password')
-      }
+      // Use the abstracted API call for consistency
+      await authApi.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword
+      });
+      toast.success('Password changed successfully!');
+      setShowChangePassword(false);
+      resetPassword();
     } catch (error) {
       console.error('Error changing password:', error)
-      toast.error('Failed to change password')
+      const message = error.response?.data?.message || 'Failed to change password'
+      toast.error(message)
     } finally {
       setChangingPassword(false)
     }

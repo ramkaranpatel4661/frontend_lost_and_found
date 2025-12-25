@@ -39,6 +39,7 @@ function App() {
         <Route path="browse" element={<Browse />} />
         <Route path="item/:id" element={<ItemDetail />} />
         <Route path="user/:id" element={<UserProfile />} />
+        <Route path="claim/:id" element={<ClaimItem />} />
       </Route>
 
       {/* Auth routes (only when not logged in) */}
@@ -57,7 +58,7 @@ function App() {
           <Route path="my-items" element={<MyItems />} />
           <Route path="chats" element={<ChatList />} />
           <Route path="/chatroom/:chatId" element={<ChatRoom />} />
-          <Route path="claim/:id" element={<ClaimItem />} />
+
           <Route path="my-claims" element={<MyClaims />} />
           <Route path="claim-reviews" element={<ClaimReviews />} />
           <Route path="handover-success/:claimId" element={<HandoverSuccess />} />
