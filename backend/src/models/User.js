@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
   stats: {
     itemsReturned: {
       type: Number,
@@ -107,11 +111,11 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -122,17 +126,17 @@ userSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Check if user is banned
-userSchema.methods.isBanned = function() {
+userSchema.methods.isBanned = function () {
   return !this.isActive && this.banReason;
 };
 
 // Update login stats
-userSchema.methods.updateLoginStats = function() {
+userSchema.methods.updateLoginStats = function () {
   this.loginCount += 1;
   this.lastLoginAt = new Date();
   this.lastSeen = new Date();
@@ -141,7 +145,7 @@ userSchema.methods.updateLoginStats = function() {
 };
 
 // Record failed login attempt
-userSchema.methods.recordFailedLogin = function() {
+userSchema.methods.recordFailedLogin = function () {
   this.failedLoginAttempts += 1;
   if (this.failedLoginAttempts >= 5) {
     this.accountLockedUntil = new Date(Date.now() + 30 * 60 * 1000); // Lock for 30 minutes
@@ -149,12 +153,12 @@ userSchema.methods.recordFailedLogin = function() {
 };
 
 // Check if account is locked
-userSchema.methods.isLocked = function() {
+userSchema.methods.isLocked = function () {
   return this.accountLockedUntil && this.accountLockedUntil > new Date();
 };
 
 // Remove password from JSON output
-userSchema.methods.toJSON = function() {
+userSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   delete userObject.password;
   return userObject;

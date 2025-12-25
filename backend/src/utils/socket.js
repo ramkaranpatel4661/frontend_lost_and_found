@@ -24,7 +24,7 @@ const initializeSocket = (io) => {
 
   io.on('connection', (socket) => {
     console.log(`✅ User ${socket.user.name} connected`);
-    
+
     // Join user's personal room for notifications
     socket.join(`user_${socket.userId}`);
 
@@ -66,7 +66,7 @@ const initializeSocket = (io) => {
     socket.on('send_message', async ({ itemId, content }) => {
       try {
         console.log('📨 [socket.js] Received send_message event:', { itemId, content, userId: socket.userId });
-        
+
         const item = await Item.findById(itemId);
         if (!item) return;
 
@@ -102,7 +102,7 @@ const initializeSocket = (io) => {
         };
         chat.messages.push(message);
         chat.lastMessage = new Date();
-        
+
         try {
           await chat.save();
           console.log('💾 [socket.js] Chat saved via socket');
@@ -163,7 +163,7 @@ const initializeSocket = (io) => {
     socket.on('update_status', async (status) => {
       try {
         await User.findByIdAndUpdate(socket.userId, {
-          isActive: status === 'online',
+          isOnline: status === 'online',
           lastSeen: new Date()
         });
 
@@ -182,7 +182,7 @@ const initializeSocket = (io) => {
       console.log(`❌ ${socket.user.name} disconnected`);
       try {
         await User.findByIdAndUpdate(socket.userId, {
-          isActive: false,
+          isOnline: false,
           lastSeen: new Date()
         });
 

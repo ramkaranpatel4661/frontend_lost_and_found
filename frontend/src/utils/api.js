@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-lost-found.onrender.com/api'
+const API_URL = 'http://localhost:5000/api' // import.meta.env.VITE_API_URL || 'https://backend-lost-found.onrender.com/api'
 
 // Create axios instance
 const api = axios.create({
@@ -63,21 +63,21 @@ export const itemsApi = {
   // Create new item
   createItem: async (itemData) => {
     const formData = new FormData();
-    
+
     // Add text fields
     Object.keys(itemData).forEach(key => {
       if (key !== 'imageUrls') {
         formData.append(key, itemData[key]);
       }
     });
-    
+
     // Add images
     if (itemData.imageUrls) {
       itemData.imageUrls.forEach(file => {
         formData.append('imageUrls', file);
       });
     }
-    
+
     return api.post('/items', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -88,14 +88,14 @@ export const itemsApi = {
   // Update item
   updateItem: async (id, itemData) => {
     const formData = new FormData();
-    
+
     // Add text fields
     Object.keys(itemData).forEach(key => {
       if (key !== 'imageUrls' && key !== 'removedImages') {
         formData.append(key, itemData[key]);
       }
     });
-    
+
     // Add new images
     if (itemData.imageUrls) {
       itemData.imageUrls.forEach(file => {
@@ -104,12 +104,12 @@ export const itemsApi = {
         }
       });
     }
-    
+
     // Add removed images info
     if (itemData.removedImages) {
       formData.append('removedImages', JSON.stringify(itemData.removedImages));
     }
-    
+
     return api.put(`/items/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -153,7 +153,7 @@ export const chatApi = {
 // Users API - Enhanced for messaging
 export const usersApi = {
   getUser: (userId) => api.get(`/users/${userId}`),
-  
+
   getUserItems: (userId, type, page = 1, limit = 12) => {
     const params = new URLSearchParams()
     if (type) params.append('type', type)
@@ -171,7 +171,7 @@ export const usersApi = {
     const params = new URLSearchParams()
     params.append('q', query)
     params.append('limit', limit.toString())
-    
+
     return api.get(`/users/search?${params.toString()}`)
   }
 }
@@ -180,7 +180,7 @@ export const usersApi = {
 export const adminApi = {
   // Dashboard
   getDashboardStats: () => api.get('/admin/dashboard'),
-  
+
   // Users Management
   getUsers: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -191,7 +191,7 @@ export const adminApi = {
   banUser: (userId, reason) => api.put(`/admin/users/${userId}/ban`, { reason }),
   unbanUser: (userId) => api.put(`/admin/users/${userId}/unban`),
   getUserStats: (userId) => api.get(`/admin/users/${userId}/stats`),
-  
+
   // Items Management
   getItems: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -200,7 +200,7 @@ export const adminApi = {
   deleteItem: (itemId) => api.delete(`/admin/items/${itemId}`),
   bulkDeleteItems: (itemIds) => api.post('/admin/items/bulk-delete', { itemIds }),
   getItemStats: (itemId) => api.get(`/admin/items/${itemId}/stats`),
-  
+
   // Claims Management
   getClaims: (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
@@ -211,7 +211,7 @@ export const adminApi = {
   rejectClaim: (claimId, reason) => api.put(`/admin/claims/${claimId}/reject`, { reason }),
   bulkApproveClaims: (claimIds) => api.post('/admin/claims/bulk-approve', { claimIds }),
   bulkRejectClaims: (claimIds, reason) => api.post('/admin/claims/bulk-reject', { claimIds, reason }),
-  
+
   // Analytics & Reports
   getAnalytics: (period = '30d') => api.get(`/admin/analytics?period=${period}`),
   getReports: (type, params = {}) => {
@@ -219,7 +219,7 @@ export const adminApi = {
     return api.get(`/admin/reports/${type}?${queryString}`);
   },
   exportData: (type, format = 'csv') => api.get(`/admin/export/${type}?format=${format}`),
-  
+
   // System Management
   getSystemStats: () => api.get('/admin/system/stats'),
   getAdminLogs: (params = {}) => {
@@ -227,7 +227,7 @@ export const adminApi = {
     return api.get(`/admin/logs?${queryString}`);
   },
   clearCache: () => api.post('/admin/system/clear-cache'),
-  
+
   // Notifications
   sendNotification: (data) => api.post('/admin/notifications/send', data),
   getNotifications: () => api.get('/admin/notifications'),
