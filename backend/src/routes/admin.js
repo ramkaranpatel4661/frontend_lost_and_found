@@ -34,7 +34,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
     const totalClaims = await Claim.countDocuments();
     const successfulReturns = await Claim.countDocuments({ status: 'resolved' });
     const pendingClaims = await Claim.countDocuments({ status: 'pending' });
-    const bannedUsers = await User.countDocuments({ isActive: false });
     const activeItems = await Item.countDocuments({ status: 'active' });
 
     // Get recent activity
@@ -49,7 +48,6 @@ router.get('/dashboard', adminAuth, async (req, res) => {
         totalClaims,
         successfulReturns,
         pendingClaims,
-        bannedUsers,
         activeItems
       },
       recentActivity: {
@@ -147,7 +145,6 @@ router.get('/users', adminAuth, async (req, res) => {
     }
     if (role) query.role = role;
     if (status === 'active') query.isActive = true;
-    if (status === 'banned') query.isActive = false;
 
     const users = await User.find(query)
       .select('-password -emailVerification.otp')
@@ -197,60 +194,7 @@ router.put('/users/:userId/promote', adminAuth, async (req, res) => {
   }
 });
 
-// @route   PUT /api/admin/users/:userId/ban
-// @desc    Ban user
-// @access  Private (Admin only)
-router.put('/users/:userId/ban', adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { reason } = req.body;
-
-    if (userId === req.user._id.toString()) {
-      return res.status(400).json({ message: 'Cannot ban yourself' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.isActive = false;
-    user.banReason = reason;
-    user.bannedAt = new Date();
-    user.bannedBy = req.user._id;
-    await user.save();
-
-    res.json({ message: 'User banned successfully', user });
-  } catch (error) {
-    console.error('Admin ban user error:', error);
-    res.status(500).json({ message: 'Server error banning user' });
-  }
-});
-
-// @route   PUT /api/admin/users/:userId/unban
-// @desc    Unban user
-// @access  Private (Admin only)
-router.put('/users/:userId/unban', adminAuth, async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    user.isActive = true;
-    user.banReason = undefined;
-    user.bannedAt = undefined;
-    user.bannedBy = undefined;
-    await user.save();
-
-    res.json({ message: 'User unbanned successfully', user });
-  } catch (error) {
-    console.error('Admin unban user error:', error);
-    res.status(500).json({ message: 'Server error unbanning user' });
-  }
-});
+// Ban/unban functionality removed
 
 // @route   DELETE /api/admin/users/:userId
 // @desc    Delete user account

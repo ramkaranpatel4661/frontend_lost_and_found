@@ -75,17 +75,7 @@ const userSchema = new mongoose.Schema({
     default: 'user'
   },
   // Admin management fields
-  banReason: {
-    type: String,
-    trim: true
-  },
-  bannedAt: {
-    type: Date
-  },
-  bannedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
+  // Admin management fields
   adminNotes: {
     type: String,
     trim: true
@@ -130,10 +120,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Check if user is banned
-userSchema.methods.isBanned = function () {
-  return !this.isActive && this.banReason;
-};
+// (ban feature removed)
 
 // Update login stats
 userSchema.methods.updateLoginStats = function () {

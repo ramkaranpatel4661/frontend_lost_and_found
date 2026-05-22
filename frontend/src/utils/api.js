@@ -188,8 +188,6 @@ export const adminApi = {
   },
   deleteUser: (userId) => api.delete(`/admin/users/${userId}`),
   promoteToAdmin: (userId) => api.put(`/admin/users/${userId}/promote`),
-  banUser: (userId, reason) => api.put(`/admin/users/${userId}/ban`, { reason }),
-  unbanUser: (userId) => api.put(`/admin/users/${userId}/unban`),
   getUserStats: (userId) => api.get(`/admin/users/${userId}/stats`),
 
   // Items Management

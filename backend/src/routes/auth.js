@@ -57,14 +57,6 @@ router.post('/login', async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    // Remove ban status on login so users can log back in after logout
-    if (user.isActive === false) {
-      user.isActive = true;
-      user.banReason = undefined;
-      user.bannedAt = undefined;
-      user.bannedBy = undefined;
-    }
-
     user.lastSeen = new Date();
     await user.save();
     const token = generateToken(user._id);
