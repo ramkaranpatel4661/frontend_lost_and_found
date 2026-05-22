@@ -153,9 +153,9 @@ const UserProfile = () => {
                     <span>{userProfile.user.itemsCount} active items</span>
                   </div>
                   <div className="flex items-center">
-                    <Activity className={`w-4 h-4 mr-1 ${userProfile.user.isActive ? 'text-green-500' : 'text-gray-400'}`} />
-                    <span className={userProfile.user.isActive ? 'text-green-600' : 'text-gray-500'}>
-                      {userProfile.user.isActive ? 'Online' : `Last seen ${new Date(userProfile.user.lastSeen).toLocaleDateString()}`}
+                    <Activity className={`w-4 h-4 mr-1 ${userProfile.user.isOnline ? 'text-green-500' : 'text-gray-400'}`} />
+                    <span className={userProfile.user.isOnline ? 'text-green-600' : 'text-gray-500'}>
+                      {userProfile.user.isOnline ? 'Online' : `Last seen ${new Date(userProfile.user.lastSeen).toLocaleDateString()}`}
                     </span>
                   </div>
                 </div>

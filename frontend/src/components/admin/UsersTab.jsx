@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Download, Users, Crown, Trash2 } from 'lucide-react';
+import { Search, Download, Users, Crown, Ban, Unlock, Trash2 } from 'lucide-react';
 
 const UsersTab = ({ 
   users, 
@@ -10,6 +10,8 @@ const UsersTab = ({
   onSearch, 
   onFilterChange, 
   onExport, 
+  onBan, 
+  onUnban, 
   onDelete 
 }) => {
   return (
@@ -34,6 +36,7 @@ const UsersTab = ({
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
+              <option value="banned">Banned</option>
             </select>
           </div>
           <div className="relative">
@@ -106,7 +109,7 @@ const UsersTab = ({
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
                   }`}>
-                    {user.isActive ? 'Active' : 'Inactive'}
+                    {user.isActive ? 'Active' : 'Banned'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -114,7 +117,26 @@ const UsersTab = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center space-x-2">
-                    {/* Only show delete action for non-admin users */}
+                    {/* Only show ban/unban and delete actions for non-admin users */}
+                    {user.role !== 'admin' && (
+                      user.isActive ? (
+                        <button
+                          onClick={() => onBan(user._id, 'Admin action')}
+                          className="text-red-600 hover:text-red-900"
+                          title="Ban User"
+                        >
+                          <Ban className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onUnban(user._id)}
+                          className="text-green-600 hover:text-green-900"
+                          title="Unban User"
+                        >
+                          <Unlock className="w-4 h-4" />
+                        </button>
+                      )
+                    )}
                     {user.role !== 'admin' && (
                       <button
                         onClick={() => onDelete(user._id)}
@@ -124,7 +146,6 @@ const UsersTab = ({
                         <Trash2 className="w-4 h-4" />
                       </button>
                     )}
-                    
                   </div>
                 </td>
               </tr>

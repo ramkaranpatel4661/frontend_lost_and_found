@@ -49,6 +49,8 @@ const AdminDashboard = () => {
     fetchItems,
     handleDeleteUser,
     handlePromoteUser,
+    handleBanUser,
+    handleUnbanUser,
     handleDeleteItem,
     handleApproveClaim,
     handleRejectClaim,
@@ -189,6 +191,8 @@ const AdminDashboard = () => {
             onSearch={handleSearch}
             onFilterChange={handleUserFilterChange}
             onExport={exportData}
+            onBan={handleBanUser}
+            onUnban={handleUnbanUser}
             onDelete={handleDeleteUser}
           />
         )}

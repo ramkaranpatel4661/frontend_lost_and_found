@@ -98,6 +98,28 @@ export const useAdmin = () => {
     }
   };
 
+  const handleBanUser = async (userId, reason) => {
+    try {
+      await adminApi.banUser(userId, reason);
+      setUsers(users.map(u => u._id === userId ? { ...u, isActive: false, banReason: reason } : u));
+      toast.success('User banned successfully');
+    } catch (error) {
+      console.error('Error banning user:', error);
+      toast.error(error.response?.data?.message || 'Failed to ban user');
+    }
+  };
+
+  const handleUnbanUser = async (userId) => {
+    try {
+      await adminApi.unbanUser(userId);
+      setUsers(users.map(u => u._id === userId ? { ...u, isActive: true, banReason: undefined } : u));
+      toast.success('User unbanned successfully');
+    } catch (error) {
+      console.error('Error unbanning user:', error);
+      toast.error(error.response?.data?.message || 'Failed to unban user');
+    }
+  };
+
   const handleDeleteItem = async (itemId) => {
     if (!window.confirm('Are you sure you want to delete this item?')) {
       return;
@@ -209,6 +231,8 @@ export const useAdmin = () => {
     fetchClaims,
     fetchItems,
     handleDeleteUser,
+    handleBanUser,
+    handleUnbanUser,
     handleDeleteItem,
     handleApproveClaim,
     handleRejectClaim,
